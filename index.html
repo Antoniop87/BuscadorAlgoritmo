@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Mecanismo de Busca</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    
+    h1 {
+      text-align: center;
+    }
+    
+    #search-form {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    #results {
+      margin-left: 40px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mecanismo de Busca</h1>
+  
+  <form id="search-form">
+    <input type="text" id="search-input" placeholder="Digite as palavras-chave">
+    <button type="submit">Buscar</button>
+  </form>
+  
+  <div id="results"></div>
+  
+  <script>
+    class Node {
+      constructor(key, url) {
+        this.key = key;
+        this.urls = [url];
+        this.left = null;
+        this.right = null;
+      }
+    }
+    
+    class BinarySearchTree {
+      constructor() {
+        this.root = null;
+      }
+      
+      insert(key, url) {
+        const newNode = new Node(key, url);
+        
+        if (this.root === null) {
+          this.root = newNode;
+        } else {
+          this._insertRecursively(this.root, newNode);
+        }
+      }
+      
+      _insertRecursively(node, newNode) {
+        if (newNode.key === node.key) {
+          node.urls.push(newNode.urls[0]);
+        } else if (newNode.key < node.key) {
+          if (node.left === null) {
+            node.left = newNode;
+          } else {
+            this._insertRecursively(node.left, newNode);
+          }
+        } else {
+          if (node.right === null) {
+            node.right = newNode;
+          } else {
+            this._insertRecursively(node.right, newNode);
+          }
+        }
+      }
+      
+      search(key) {
+        return this._searchRecursively(this.root, key);
+      }
+      
+      _searchRecursively(node, key) {
+        if (node === null || key === node.key) {
+          return node ? node.urls : [];
+        } else if (key < node.key) {
+          return this._searchRecursively(node.left, key);
+        } else {
+          return this._searchRecursively(node.right, key);
+        }
+      }
+    }
+    
+    const tree = new BinarySearchTree();
+    
+    // Inserir conteúdo indexado
+    tree.insert("gato", "https://exemplo.com/conteudo1");
+    tree.insert("gato", "https://exemplo.com/conteudo2");
+    tree.insert("cachorro", "https://exemplo.com/conteudo3");
+    
+    const searchForm = document.getElementById("search-form");
+    const searchInput = document.getElementById("search-input");
+    const resultsDiv = document.getElementById("results");
+    
+    searchForm.addEventListener("submit", function(event) {
+      event.preventDefault();
+      const searchQuery = searchInput.value.trim();
+      
+      if (searchQuery !== "") {
+        const results = tree.search(searchQuery);
+        showResults(results);
+      }
+    });
+    
+    function showResults(results) {
+      resultsDiv.innerHTML = "";
+      
+      if (results.length > 0) {
+        const heading = document.createElement("h2");
+        heading.textContent = "Resultados:";
+        resultsDiv.appendChild(heading);
+        
+        const list = document.createElement("ul");
+        
+        results.forEach(function(url) {
+          const listItem = document.createElement("li");
+          const link = document.createElement("a");
+          link.href = url;
+          link.textContent = url;
+          listItem.appendChild(link);
+          list.appendChild(listItem);
+        });
+        
+        resultsDiv.appendChild(list);
+      } else {
+        const message = document.createElement("p");
+        message.textContent = "Nenhum resultado encontrado.";
+        resultsDiv.appendChild(message);
+      }
+    }
+  </script>
+</body>
+</html>
