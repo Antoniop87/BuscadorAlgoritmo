@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
   <meta charset="UTF-8">
   <title>SearchIF</title>
@@ -7,27 +8,27 @@
     body {
       font-family: Arial, sans-serif;
     }
-    
+
     h1 {
       text-align: center;
       color: red;
     }
-    
+
     #search-form {
       text-align: center;
       margin-top: 50px;
     }
-    
+
     #search-input {
       padding: 8px;
       font-size: 16px;
       width: 300px;
     }
-    
+
     #search-input:focus {
       outline: none;
     }
-    
+
     #search-button {
       padding: 8px 16px;
       font-size: 16px;
@@ -36,26 +37,26 @@
       border: none;
       cursor: pointer;
     }
-    
+
     #search-button:hover {
       background-color: #d90000;
     }
-    
+
     #search-results {
       margin-top: 20px;
     }
-    
+
     .result-link {
       display: block;
       margin-bottom: 10px;
       color: #007bff;
       text-decoration: none;
     }
-    
+
     .result-link:hover {
       text-decoration: underline;
     }
-    
+
     .no-results {
       text-align: center;
       color: #777;
@@ -63,16 +64,23 @@
     }
   </style>
 </head>
+
 <body>
   <h1>SearchIF</h1>
-  
+
   <form id="search-form">
     <input type="text" id="search-input" placeholder="pesquise no searchIf">
     <button type="submit" id="search-button">Buscar</button>
   </form>
-  
+
   <div id="search-results"></div>
-  
+
+  <div id="tree-container">
+    <button id="tree-button">Exibir Árvore</button>
+    <div id="tree" style="display: none;"></div>
+  </div>
+
+
   <script>
     class TreeNode {
       constructor(key, data) {
@@ -82,22 +90,22 @@
         this.right = null;
       }
     }
-    
+
     class BinaryTree {
       constructor() {
         this.root = null;
       }
-      
+
       insert(key, data) {
         const newNode = new TreeNode(key, data);
-        
+
         if (this.root === null) {
           this.root = newNode;
         } else {
           this.insertNode(this.root, newNode);
         }
       }
-      
+
       insertNode(node, newNode) {
         if (newNode.key < node.key) {
           if (node.left === null) {
@@ -113,16 +121,16 @@
           }
         }
       }
-      
+
       search(key) {
         return this.searchNode(this.root, key);
       }
-      
+
       searchNode(node, key) {
         if (node === null) {
           return null;
         }
-        
+
         if (node.key.includes(key)) {
           return node.data;
         } else if (key < node.key) {
@@ -132,31 +140,38 @@
         }
       }
     }
-    
+
     // indexar paginas
     const index = new BinaryTree();
-    
+
     // resultados das buscas por palavras chaves
-    index.insert("gato" , ["https://pt.wikipedia.org/wiki/Gato", "https://www.petz.com.br/blog/pets/gatos/"]);
-    index.insert("nubia" , ["https://pt.wikipedia.org/wiki/N%C3%BAbia"]);
+
+    index.insert("tentaculo", ["https://pt.wikipedia.org/wiki/Tent%C3%A1culo"])
+    index.insert("gato", ["https://pt.wikipedia.org/wiki/Gato", "https://www.petz.com.br/blog/pets/gatos/"]);
+    index.insert("nubia", ["https://pt.wikipedia.org/wiki/N%C3%BAbia"]);
     index.insert("youtube", ["https://www.youtube.com"]);
-    index.insert("google", ["https://www.google.com"])
+    index.insert("google", ["https://www.google.com"]);
     index.insert("ifpe", ["https://www.ifpe.edu.br/", "https://www.instagram.com/ifpeoficial/", "https://br.linkedin.com/company/ifpe-campus-recife"]);
-    
+    index.insert("b", ["https://pt.wikipedia.org/wiki/B"]);
+
     const searchForm = document.getElementById("search-form");
     const searchInput = document.getElementById("search-input");
     const searchResults = document.getElementById("search-results");
-    
-    searchForm.addEventListener("submit", function(event) {
+
+    searchForm.addEventListener("submit", function (event) {
       event.preventDefault();
       const query = searchInput.value.toLowerCase();
-      
+
       const results = index.search(query);
-      
+
       if (results) {
         searchResults.innerHTML = "";
-        
-        results.forEach(function(link) {
+
+        const resultsMessage = document.createElement("div");
+        resultsMessage.textContent = `Resultados para ${query} \n`;
+        searchResults.appendChild(resultsMessage);
+
+        results.forEach(function (link) {
           const resultLink = document.createElement("a");
           resultLink.href = link;
           resultLink.textContent = link;
@@ -164,9 +179,70 @@
           searchResults.appendChild(resultLink);
         });
       } else {
-        searchResults.innerHTML = "<div class='no-results'>sem resultados para a sua busca</div>";
+        searchResults.innerHTML = `<div class='no-results'>sem resultados para a sua busca para ${query}</div>`;
       }
     });
+
+    const treeButton = document.getElementById("tree-button");
+    const treeContainer = document.getElementById("tree");
+    let treeVisible = false;
+
+    treeButton.addEventListener("click", function () {
+      if (!treeVisible) {
+        treeContainer.style.display = "block";
+        treeButton.textContent = "Fechar Árvore";
+        if (treeContainer.innerHTML === "") {
+          exibirArvore();
+        }
+        treeVisible = true;
+      } else {
+        treeContainer.style.display = "none";
+        treeButton.textContent = "Exibir Árvore";
+        treeVisible = false;
+      }
+    });
+
+
+
+    function exibirArvore() {
+      const treeRepresentation = document.createElement("div");
+      exibirNode(index.root, treeRepresentation);
+      treeContainer.appendChild(treeRepresentation);
+    }
+
+    function exibirNode(node, container) {
+      if (node === null) {
+        return;
+      }
+
+      exibirNode(node.left, container);
+
+      const links = index.search(node.key); // carregar os links de suas respectivas chaves
+      if (links) {
+        const nodeElement = document.createElement("div");
+        nodeElement.textContent = `${node.key}:`;
+
+        const linksList = document.createElement("ul");
+        links.forEach(function (link) {
+          const listItem = document.createElement("li");
+          const linkElement = document.createElement("a");
+          linkElement.href = link;
+          linkElement.textContent = link;
+          linkElement.classList.add("result-link");
+          listItem.appendChild(linkElement);
+          linksList.appendChild(listItem);
+        });
+
+        nodeElement.appendChild(linksList);
+        container.appendChild(nodeElement);
+      }
+
+      exibirNode(node.right, container);
+    }
+
+
+
   </script>
 </body>
+
 </html>
